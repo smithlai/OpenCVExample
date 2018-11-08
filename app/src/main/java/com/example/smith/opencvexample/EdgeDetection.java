@@ -14,7 +14,12 @@ import org.opencv.android.OpenCVLoader;
 import org.opencv.core.Mat;
 
 public class EdgeDetection extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener2 {
-    public native void detectEdges(long matGray);
+    /*JNI Function*/
+    ////Java_com_example_smith_opencvexample_EdgeDetection_detectEdges
+    public native void detectEdges(long matPtr);
+    public native void detectSize(long matPtr);
+    public native void markObjectRect(long matPtr, double threshhold);
+
 
     private static final String TAG = "EdgeDetection";
     private CameraBridgeViewBase cameraBridgeViewBase;
@@ -80,8 +85,12 @@ public class EdgeDetection extends AppCompatActivity implements CameraBridgeView
 
     @Override
     public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
-        Mat edges = inputFrame.gray();
-        detectEdges(edges.getNativeObjAddr());
+        //Mat edges = inputFrame.gray();
+        //detectEdges(edges.getNativeObjAddr());
+        Mat edges = inputFrame.rgba();
+        //detectSize(edges.getNativeObjAddr());
+        markObjectRect(edges.getNativeObjAddr(),60);
+
         return edges;
     }
 }
