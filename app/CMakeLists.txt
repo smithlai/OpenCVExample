@@ -13,7 +13,7 @@ cmake_minimum_required(VERSION 3.4.1)
 # [EDIT] Set Path to OpenCV and include the directories
 # pathToOpenCV is just an example to how to write in Mac.
 # General format: /Users/user-name/OpenCV-android-sdk/sdk/native
-set(pathToOpenCV D:\\Project\\AndroidProject\\opencv-3.3.1-android-sdk\\OpenCV-android-sdk\\sdk\\native)
+set(pathToOpenCV D:\\GoogleDrive\\Project\\AndroidProject\\opencv-3.3.1-android-sdk\\OpenCV-android-sdk\\sdk\\native)
 include_directories(${pathToOpenCV}/jni/include)
 
 
@@ -28,7 +28,7 @@ add_library( # Sets the name of the library.
 
 # [EDIT] Similar to above lines, add the OpenCV library
 add_library( lib_opencv SHARED IMPORTED )
-set_target_properties(lib_opencv PROPERTIES IMPORTED_LOCATION D:\\Project\\AndroidProject\\OpenCVExample\\app\\src\\main\\jniLibs\\${ANDROID_ABI}\\libopencv_java3.so)
+set_target_properties(lib_opencv PROPERTIES IMPORTED_LOCATION D:\\GoogleDrive\\Project\\AndroidProject\\OpenCVExample\\app\\src\\main\\jniLibs\\${ANDROID_ABI}\\libopencv_java3.so)
 
 # Searches for a specified prebuilt library and stores the path as a
 # variable. Because CMake includes system libraries in the search path by

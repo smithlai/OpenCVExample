@@ -19,7 +19,7 @@ android {
     //EDIT
     sourceSets {
         main {
-            jniLibs.srcDirs = ["D:\\Project\\AndroidProject\\OpenCVExample\\app\\src\\main\\jniLibs"]
+            jniLibs.srcDirs = ["D:\\GoogleDrive\\Project\\AndroidProject\\OpenCVExample\\app\\src\\main\\jniLibs"]
             //EDIT: Use your custom location to jniLibs. Path given is only for example purposes.
         }
     }
