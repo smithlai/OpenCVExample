@@ -58,10 +58,10 @@ JNIEXPORT void JNICALL Java_com_example_smith_opencvexample_EdgeDetection_detect
 /// <returns></returns>
 extern "C"
 JNIEXPORT void JNICALL Java_com_example_smith_opencvexample_EdgeDetection_markObjectRect(
-        JNIEnv*, jobject /* this */,
+        JNIEnv *env, jobject /* this */,
         jlong imgPtr,
-        jdouble jthreshold
-
+        jdouble jthreshold,
+        jobject rect
 )
 
 {
@@ -94,12 +94,30 @@ JNIEXPORT void JNICALL Java_com_example_smith_opencvexample_EdgeDetection_markOb
             bounding_rect = boundingRect( contours[i] ); // Find the bounding rectangle for biggest contour
         }
     }
+    // Get the class of the input object
+    jclass nameCls = env->GetObjectClass(rect);
 
+    //Z->boolean,B->byte,C->char,S->short,I->int,J->long,F->float,D->double,Ljava/lang/String->Java Lib String
+    // Get Field references
+    jfieldID width_id = env->GetFieldID(nameCls, "width", "I");
+    jfieldID height_id = env->GetFieldID(nameCls, "height", "I");
+    jfieldID x_id = env->GetFieldID(nameCls, "x", "I");
+    jfieldID y_id = env->GetFieldID(nameCls, "y", "I");
+
+
+    // Get Method references
+    //jmethodID method_id = env->GetMethodID(nameCls, "methodname", "(II)V"); //(II)V = void methodname(int,int)
+    //env->->CallVoidMethod(jniEnv, nameCls, method_id,1,2);
+
+    // Set fields for object
+    env->SetIntField( rect, width_id, bounding_rect.width);
+    env->SetIntField( rect, height_id, bounding_rect.height);
+    env->SetIntField( rect, x_id, bounding_rect.x);
+    env->SetIntField( rect, y_id, bounding_rect.y);
 
 //    for (int i = 0; i < contours.size(); i++)
 //        cv::drawContours(matImg, contours, i, cv::Scalar(255, 0, 0, 255), 1);
     cv::Scalar color2 = cv::Scalar( rng.uniform(0, 255), rng.uniform(0,255), rng.uniform(0,255) );
     //cv::drawContours( matImg, contours,largest_contour_index, color2, 2 ); // Draw the largest contour using previously stored index.
     rectangle( matImg, bounding_rect.tl(), bounding_rect.br(), color2, 2, 8, 0 );
-
 }
