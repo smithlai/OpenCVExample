@@ -71,7 +71,7 @@ JNIEXPORT void JNICALL Java_com_example_smith_opencvexample_EdgeDetection_markOb
     cv::Mat& matImg = *(cv::Mat *) imgPtr;
     double threshold = jthreshold;
     //    cv::Mat grayImg;
-    cv::Mat& grayImg = matImg;
+    cv::Mat grayImg;
     cv::cvtColor(matImg, grayImg, CV_BGR2GRAY);
 
     cv::Mat& edges = grayImg;

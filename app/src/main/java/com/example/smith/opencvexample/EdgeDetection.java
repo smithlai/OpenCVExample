@@ -1,5 +1,6 @@
 package com.example.smith.opencvexample;
 
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
@@ -12,15 +13,15 @@ import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
+import org.opencv.android.Utils;
 import org.opencv.core.Mat;
 import org.opencv.core.Rect;
 import org.xmlpull.v1.XmlSerializer;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.StringWriter;
 
 public class EdgeDetection extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener2 {
     /*JNI Function*/
@@ -52,7 +53,7 @@ public class EdgeDetection extends AppCompatActivity implements CameraBridgeView
         super.onCreate(savedInstanceState);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         setContentView(R.layout.activity_opencv_camera);
-        aaaa("Falcon",1,2,3,4);
+
         cameraBridgeViewBase = (CameraBridgeViewBase) findViewById(R.id.camera_view);
         cameraBridgeViewBase.setVisibility(SurfaceView.VISIBLE);
         cameraBridgeViewBase.setCvCameraViewListener(this); ////CameraBridgeViewBase.CvCameraViewListener2
@@ -99,30 +100,41 @@ public class EdgeDetection extends AppCompatActivity implements CameraBridgeView
         //Mat edges = inputFrame.gray();
         //detectEdges(edges.getNativeObjAddr());
         Mat origin = inputFrame.rgba();
-        Mat copy = origin.clone();
+        Mat process = origin.clone();
         //detectSize(edges.getNativeObjAddr());
 
         Rect rect = new Rect(); //Rect object with data
-        markObjectRect(origin.getNativeObjAddr(),60.0d, rect);
+        markObjectRect(process.getNativeObjAddr(),60.0d, rect);
 
-        long time= System.currentTimeMillis();
+        Bitmap bmp = Bitmap.createBitmap(origin.cols(), origin.rows(), Bitmap.Config.ARGB_8888);
+        Utils.matToBitmap(origin,bmp);
 
+        Bitmap bmp2 = Bitmap.createBitmap(process.cols(), process.rows(), Bitmap.Config.ARGB_8888);
+        Utils.matToBitmap(process,bmp2);
 
-        return origin;
+        if(rect.area() > 5000)
+            savePicAndXml("Falcon",bmp, rect.x,rect.y,rect.width,rect.height, bmp2);
+
+        return process;
     }
-    private  void aaaa(String name,int x,int y,int w, int h){
+    private  void savePicAndXml(String name,Bitmap bmp,int x,int y,int w, int h, Bitmap bmp2){
         try {
             long time= System.currentTimeMillis();
             String filename_base = name+Long.toString(time);
-            String photoname = filename_base + ".jpg";
+            String picname = filename_base + ".jpg";
+            String picname2 = filename_base + ".jpeg";
             String xmlname = filename_base + ".xml";
             File filexml = new File(getPublicDownloadStorageDir(name), xmlname);
-            File filephoto = new File(getPublicDownloadStorageDir(name), photoname);
-            FileWriter fw = new FileWriter(filexml);
-
+            File filepic = new File(getPublicDownloadStorageDir(name), picname);
+            File filepic2 = new File(getPublicDownloadStorageDir(name), picname2);
+//            FileWriter fw = new FileWriter(filexml);
+//            StringWriter writer = new StringWriter();
+            FileOutputStream fos_xml = new FileOutputStream(filexml);
+            FileOutputStream fos_pic = new FileOutputStream(filepic);
+            FileOutputStream fos_pic2 = new FileOutputStream(filepic2);
             XmlSerializer xmlSerializer = Xml.newSerializer();
-            StringWriter writer = new StringWriter();
-            xmlSerializer.setOutput(writer);
+
+            xmlSerializer.setOutput(fos_xml,"UTF-8");
 
 //            xmlSerializer.startDocument("UTF-8", true);
             xmlSerializer.startTag(null, "annotation");
@@ -130,12 +142,12 @@ public class EdgeDetection extends AppCompatActivity implements CameraBridgeView
             xmlSerializer.text(name);
             xmlSerializer.endTag(null, "folder");
             xmlSerializer.startTag(null,"filename");
-            xmlSerializer.text(photoname);
+            xmlSerializer.text(picname);
             xmlSerializer.endTag(null, "filename");
 
 
             xmlSerializer.startTag(null,"path");
-            xmlSerializer.text(filephoto.getPath());
+            xmlSerializer.text(filepic.getPath());
             xmlSerializer.endTag(null, "path");
 
             xmlSerializer.startTag(null,"source");
@@ -146,10 +158,10 @@ public class EdgeDetection extends AppCompatActivity implements CameraBridgeView
 
             xmlSerializer.startTag(null,"size");
             xmlSerializer.startTag(null,"width");
-            xmlSerializer.text("222222222");
+            xmlSerializer.text(Integer.toString(bmp.getWidth()));
             xmlSerializer.endTag(null, "width");
             xmlSerializer.startTag(null,"height");
-            xmlSerializer.text("222222222");
+            xmlSerializer.text(Integer.toString(bmp.getHeight()));
             xmlSerializer.endTag(null, "height");
             xmlSerializer.startTag(null,"depth");
             xmlSerializer.text("3");
@@ -157,7 +169,7 @@ public class EdgeDetection extends AppCompatActivity implements CameraBridgeView
             xmlSerializer.endTag(null, "size");
 
             xmlSerializer.startTag(null,"segmented");
-            xmlSerializer.text("222222222");
+            xmlSerializer.text("0");
             xmlSerializer.endTag(null, "segmented");
 
             xmlSerializer.startTag(null,"object");
@@ -176,16 +188,16 @@ public class EdgeDetection extends AppCompatActivity implements CameraBridgeView
             xmlSerializer.endTag(null, "difficult");
             xmlSerializer.startTag(null,"bndbox");
             xmlSerializer.startTag(null,"xmin");
-            xmlSerializer.text("222222222");
+            xmlSerializer.text(Integer.toString(x));
             xmlSerializer.endTag(null, "xmin");
             xmlSerializer.startTag(null,"ymin");
-            xmlSerializer.text("222222222");
+            xmlSerializer.text(Integer.toString(y));
             xmlSerializer.endTag(null, "ymin");
             xmlSerializer.startTag(null,"xmax");
-            xmlSerializer.text("222222222");
+            xmlSerializer.text(Integer.toString(x+w));
             xmlSerializer.endTag(null, "xmax");
             xmlSerializer.startTag(null,"ymax");
-            xmlSerializer.text("222222222");
+            xmlSerializer.text(Integer.toString(y+h));
             xmlSerializer.endTag(null, "ymax");
             xmlSerializer.endTag(null, "bndbox");
 
@@ -198,10 +210,20 @@ public class EdgeDetection extends AppCompatActivity implements CameraBridgeView
             xmlSerializer.endTag(null, "annotation");
             xmlSerializer.endDocument();
             xmlSerializer.flush();
-            String dataWrite = writer.toString();
+            fos_xml.flush();
+            fos_xml.close();
 
-            fw.write(dataWrite.toString());
-            fw.close();
+//            String dataWrite = writer.toString();
+//            fw.write(dataWrite.toString());
+//            fw.close();
+
+            bmp.compress(Bitmap.CompressFormat.JPEG, 90, fos_pic);
+            fos_pic.flush();
+            fos_pic.close();
+
+            bmp2.compress(Bitmap.CompressFormat.JPEG, 50, fos_pic2);
+            fos_pic2.flush();
+            fos_pic2.close();
         }
         catch (FileNotFoundException e) {
             // TODO Auto-generated catch block
