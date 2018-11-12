@@ -1,34 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout
+<LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.example.smith.opencvexample.MainActivity">
+    tools:context="com.example.smith.opencvexample.MainActivity"
+    android:orientation="vertical">
 
     <TextView
         android:id="@+id/sample_text"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Hello World!"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        android:text="Hello World!" />
+
+    <EditText
+        android:text=""
+        android:hint="classify name"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+
+        android:id="@+id/classifyname"/>
 
     <Button
         android:text="OpenCV Camera"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/sample_text"
+
         android:id="@+id/cameraInit"/>
     <Button
         android:text="OpenCV Edge"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:layout_constraintTop_toBottomOf="@id/cameraInit"
-        app:layout_constraintLeft_toLeftOf="parent"
-
         android:id="@+id/edgedetection"/>
 
-</android.support.constraint.ConstraintLayout>
+</LinearLayout>

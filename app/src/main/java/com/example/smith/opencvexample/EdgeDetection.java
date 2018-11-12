@@ -1,5 +1,6 @@
 package com.example.smith.opencvexample;
 
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.os.Environment;
@@ -33,7 +34,7 @@ public class EdgeDetection extends AppCompatActivity implements CameraBridgeView
 
     private static final String TAG = "EdgeDetection";
     private CameraBridgeViewBase cameraBridgeViewBase;
-
+    private String mClassifyName = "Unknown";
     private BaseLoaderCallback baseLoaderCallback = new BaseLoaderCallback(this) {
         @Override
         public void onManagerConnected(int status) {
@@ -53,7 +54,8 @@ public class EdgeDetection extends AppCompatActivity implements CameraBridgeView
         super.onCreate(savedInstanceState);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         setContentView(R.layout.activity_opencv_camera);
-
+        Intent i = getIntent();
+        mClassifyName = i.getStringExtra("classifyname");
         cameraBridgeViewBase = (CameraBridgeViewBase) findViewById(R.id.camera_view);
         cameraBridgeViewBase.setVisibility(SurfaceView.VISIBLE);
         cameraBridgeViewBase.setCvCameraViewListener(this); ////CameraBridgeViewBase.CvCameraViewListener2
@@ -113,7 +115,7 @@ public class EdgeDetection extends AppCompatActivity implements CameraBridgeView
         Utils.matToBitmap(process,bmp2);
 
         if(rect.area() > 5000)
-            savePicAndXml("Falcon",bmp, rect.x,rect.y,rect.width,rect.height, bmp2);
+            savePicAndXml(mClassifyName,bmp, rect.x,rect.y,rect.width,rect.height, bmp2);
 
         return process;
     }
@@ -122,11 +124,11 @@ public class EdgeDetection extends AppCompatActivity implements CameraBridgeView
             long time= System.currentTimeMillis();
             String filename_base = name+Long.toString(time);
             String picname = filename_base + ".jpg";
-            String picname2 = filename_base + ".jpeg";
+            String picname2 = filename_base + ".jpg";
             String xmlname = filename_base + ".xml";
             File filexml = new File(getPublicDownloadStorageDir(name), xmlname);
             File filepic = new File(getPublicDownloadStorageDir(name), picname);
-            File filepic2 = new File(getPublicDownloadStorageDir(name), picname2);
+            File filepic2 = new File(getPublicDownloadStorageDir(name+"_check"), picname2);
 //            FileWriter fw = new FileWriter(filexml);
 //            StringWriter writer = new StringWriter();
             FileOutputStream fos_xml = new FileOutputStream(filexml);
