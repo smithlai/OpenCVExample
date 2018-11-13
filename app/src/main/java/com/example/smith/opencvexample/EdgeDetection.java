@@ -7,9 +7,7 @@ import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.util.Xml;
-import android.view.SurfaceView;
 import android.view.WindowManager;
-import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.RelativeLayout;
 import android.widget.ToggleButton;
@@ -44,6 +42,8 @@ public class EdgeDetection extends AppCompatActivity implements CameraBridgeView
     private String mClassifyName = "Unknown";
     private ToggleButton mToggleCapture;
     private EditText mPaddingCapture;
+    private EditText mThreshold;
+
     private BaseLoaderCallback baseLoaderCallback = new BaseLoaderCallback(this) {
         @Override
         public void onManagerConnected(int status) {
@@ -72,6 +72,7 @@ public class EdgeDetection extends AppCompatActivity implements CameraBridgeView
 
         mToggleCapture = (ToggleButton) findViewById(R.id.toggle_capture);
         mPaddingCapture = (EditText) findViewById(R.id.padding_capture);
+        mThreshold = (EditText) findViewById(R.id.threshold);
     }
 
     @Override
@@ -134,6 +135,7 @@ public class EdgeDetection extends AppCompatActivity implements CameraBridgeView
         //detectEdges(edges.getNativeObjAddr());
 
         Mat origin = inputFrame.rgba();
+
         //crop center
         Mat cropped = null;
         int shift =  origin.height() - origin.width();
@@ -144,8 +146,10 @@ public class EdgeDetection extends AppCompatActivity implements CameraBridgeView
             Rect roi = new Rect( -shift/2 , 0, origin.height(), origin.height());
             cropped = new Mat(origin, roi);
         }
+        Mat resized = new Mat(600,600, CvType.CV_8UC3);
+        Imgproc.resize(cropped, resized, resized.size()); //resize image
 
-        Mat process = cropped.clone();
+        Mat process = resized.clone();
         //detectSize(edges.getNativeObjAddr());
 
         Rect rect = new Rect(); //Rect object with data
@@ -155,25 +159,30 @@ public class EdgeDetection extends AppCompatActivity implements CameraBridgeView
         }catch(Exception e){
 
         }
-        markObjectRect(process.getNativeObjAddr(), 60.0d,padding, rect);
+        double threshold = 60.0d;
+        try {
+            threshold = Math.abs(Double.parseDouble(mThreshold.getText().toString()));
+        }catch(Exception e){
+
+        }
+        markObjectRect(process.getNativeObjAddr(), threshold,padding, rect);
 
 
-        if(mToggleCapture.isChecked()){
-            if (rect.area() > 5000) {
-                Mat dst = new Mat(600,600, CvType.CV_8UC3);
+        if(mToggleCapture.isChecked()) {
+            if (rect.area() > 1000) {
 
-                Imgproc.resize(cropped, dst, dst.size()); //resize image
-                Bitmap bmp = Bitmap.createBitmap(dst.cols(), dst.rows(), Bitmap.Config.ARGB_8888);
-                Utils.matToBitmap(dst, bmp);
+                Bitmap bmp = Bitmap.createBitmap(resized.cols(), resized.rows(), Bitmap.Config.ARGB_8888);
+                Utils.matToBitmap(resized, bmp);
 
-                Imgproc.resize(process, dst, dst.size()); //resize image
-                Bitmap bmp2 = Bitmap.createBitmap(dst.cols(), dst.rows(), Bitmap.Config.ARGB_8888);
-                Utils.matToBitmap(dst, bmp2);
+
+                Bitmap bmp2 = Bitmap.createBitmap(process.cols(), process.rows(), Bitmap.Config.ARGB_8888);
+                Utils.matToBitmap(process, bmp2);
 
                 savePicAndXml(mClassifyName, bmp, rect.x, rect.y, rect.width, rect.height, bmp2);
             }
         }
-        process.copyTo(origin.rowRange(0, process.height()).colRange(0, process.width()));
+        Imgproc.resize(process, cropped, cropped.size()); //resize image to original center crop size and paste to frame
+        cropped.copyTo(origin.rowRange(0, cropped.height()).colRange(0, cropped.width()));
         return origin;
     }
 
