@@ -61,6 +61,7 @@ JNIEXPORT void JNICALL Java_com_example_smith_opencvexample_EdgeDetection_markOb
         JNIEnv *env, jobject /* this */,
         jlong imgPtr,
         jdouble jthreshold,
+        jint padding,
         jobject rect
 )
 
@@ -92,6 +93,25 @@ JNIEXPORT void JNICALL Java_com_example_smith_opencvexample_EdgeDetection_markOb
         {
             largest_area = area;
             bounding_rect = boundingRect( contours[i] ); // Find the bounding rectangle for biggest contour
+            bounding_rect.x -= padding;
+            bounding_rect.y -= padding;
+            bounding_rect.width += padding*2;
+            bounding_rect.height += padding*2;
+            if(bounding_rect.x < 0) {
+                bounding_rect.width += bounding_rect.x;
+                bounding_rect.x = 0;
+            }
+            if(bounding_rect.y < 0) {
+                bounding_rect.height += bounding_rect.y;
+                bounding_rect.y = 0;
+            }
+            if((bounding_rect.x + bounding_rect.width) > edges.size().width){
+                bounding_rect.width = edges.size().width - bounding_rect.x;
+            }
+            if((bounding_rect.y + bounding_rect.height) > edges.size().height){
+                bounding_rect.height = edges.size().height - bounding_rect.y;
+            }
+
         }
     }
     // Get the class of the input object

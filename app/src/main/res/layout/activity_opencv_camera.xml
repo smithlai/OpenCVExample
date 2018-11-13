@@ -26,6 +26,15 @@
         android:layout_height="match_parent"
         android:background="@color/colorAccent"
         android:layout_alignParentRight="true">
+        <EditText
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:id="@+id/padding_capture"
+            android:inputType="number"
+            android:text="0"
+            />
+        />
         <ToggleButton
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

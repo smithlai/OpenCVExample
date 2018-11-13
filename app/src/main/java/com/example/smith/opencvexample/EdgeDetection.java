@@ -10,6 +10,7 @@ import android.util.Xml;
 import android.view.SurfaceView;
 import android.view.WindowManager;
 import android.widget.CompoundButton;
+import android.widget.EditText;
 import android.widget.RelativeLayout;
 import android.widget.ToggleButton;
 
@@ -34,7 +35,7 @@ public class EdgeDetection extends AppCompatActivity implements CameraBridgeView
     ////Java_com_example_smith_opencvexample_EdgeDetection_detectEdges
     public native void detectEdges(long matPtr);
     public native void detectSize(long matPtr);
-    public native void markObjectRect(long matPtr, double threshhold, Rect rect);
+    public native void markObjectRect(long matPtr, double threshhold,int padding, Rect rect);
 
 
     private static final String TAG = "EdgeDetection";
@@ -42,6 +43,7 @@ public class EdgeDetection extends AppCompatActivity implements CameraBridgeView
     private RelativeLayout mOverlay;
     private String mClassifyName = "Unknown";
     private ToggleButton mToggleCapture;
+    private EditText mPaddingCapture;
     private BaseLoaderCallback baseLoaderCallback = new BaseLoaderCallback(this) {
         @Override
         public void onManagerConnected(int status) {
@@ -69,6 +71,7 @@ public class EdgeDetection extends AppCompatActivity implements CameraBridgeView
         mOverlay = (RelativeLayout) findViewById(R.id.overlay);
 
         mToggleCapture = (ToggleButton) findViewById(R.id.toggle_capture);
+        mPaddingCapture = (EditText) findViewById(R.id.padding_capture);
     }
 
     @Override
@@ -146,7 +149,13 @@ public class EdgeDetection extends AppCompatActivity implements CameraBridgeView
         //detectSize(edges.getNativeObjAddr());
 
         Rect rect = new Rect(); //Rect object with data
-        markObjectRect(process.getNativeObjAddr(), 60.0d, rect);
+        int padding = 0;
+        try {
+            padding = Math.abs(Integer.parseInt(mPaddingCapture.getText().toString()));
+        }catch(Exception e){
+
+        }
+        markObjectRect(process.getNativeObjAddr(), 60.0d,padding, rect);
 
 
         if(mToggleCapture.isChecked()){
@@ -177,7 +186,10 @@ public class EdgeDetection extends AppCompatActivity implements CameraBridgeView
             String xmlname = filename_base + ".xml";
             File filexml = new File(getPublicDownloadStorageDir(name), xmlname);
             File filepic = new File(getPublicDownloadStorageDir(name), picname);
-            File filepic2 = new File(getPublicDownloadStorageDir(name+"_check"), picname2);
+            File checkfolder = new File(getPublicDownloadStorageDir(name), name+"_check");
+            checkfolder.mkdirs();
+            File filepic2 = new File(checkfolder, picname2);
+
 //            FileWriter fw = new FileWriter(filexml);
 //            StringWriter writer = new StringWriter();
             FileOutputStream fos_xml = new FileOutputStream(filexml);
