@@ -9,6 +9,9 @@ import android.util.Log;
 import android.util.Xml;
 import android.view.SurfaceView;
 import android.view.WindowManager;
+import android.widget.CompoundButton;
+import android.widget.RelativeLayout;
+import android.widget.ToggleButton;
 
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase;
@@ -34,7 +37,9 @@ public class EdgeDetection extends AppCompatActivity implements CameraBridgeView
 
     private static final String TAG = "EdgeDetection";
     private CameraBridgeViewBase cameraBridgeViewBase;
+    private RelativeLayout mOverlay;
     private String mClassifyName = "Unknown";
+    private ToggleButton mToggleCapture;
     private BaseLoaderCallback baseLoaderCallback = new BaseLoaderCallback(this) {
         @Override
         public void onManagerConnected(int status) {
@@ -57,9 +62,11 @@ public class EdgeDetection extends AppCompatActivity implements CameraBridgeView
         Intent i = getIntent();
         mClassifyName = i.getStringExtra("classifyname");
         cameraBridgeViewBase = (CameraBridgeViewBase) findViewById(R.id.camera_view);
-        cameraBridgeViewBase.setVisibility(SurfaceView.VISIBLE);
+//        cameraBridgeViewBase.setVisibility(SurfaceView.VISIBLE);
         cameraBridgeViewBase.setCvCameraViewListener(this); ////CameraBridgeViewBase.CvCameraViewListener2
+        mOverlay = (RelativeLayout) findViewById(R.id.overlay);
 
+        mToggleCapture = (ToggleButton) findViewById(R.id.toggle_capture);
     }
 
     @Override
@@ -86,6 +93,25 @@ public class EdgeDetection extends AppCompatActivity implements CameraBridgeView
         if (cameraBridgeViewBase != null)
             cameraBridgeViewBase.disableView();
     }
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+
+        // Get the preview size
+        int previewWidth = cameraBridgeViewBase.getMeasuredWidth(),
+                previewHeight = cameraBridgeViewBase.getMeasuredHeight();
+
+        // Set the height of the overlay so that it makes the preview a square
+        RelativeLayout.LayoutParams overlayParams = (RelativeLayout.LayoutParams) mOverlay.getLayoutParams();
+        int x = previewHeight - previewWidth;
+        if(x>0) //potrait
+            overlayParams.height = x;
+        else//landscape
+            overlayParams.width = Math.abs(x);
+        mOverlay.setLayoutParams(overlayParams);
+        int size = Math.min(previewHeight , previewWidth);
+        cameraBridgeViewBase.setMaxFrameSize(size ,size);
+    }
 
     @Override
     public void onCameraViewStarted(int width, int height) {
@@ -101,39 +127,66 @@ public class EdgeDetection extends AppCompatActivity implements CameraBridgeView
     public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
         //Mat edges = inputFrame.gray();
         //detectEdges(edges.getNativeObjAddr());
+
         Mat origin = inputFrame.rgba();
-        Mat process = origin.clone();
+        //crop center
+        Mat cropped = null;
+        int shift =  origin.height() - origin.width();
+        if( shift>0 ) { //potrait
+            Rect roi = new Rect( 0 , shift/2, origin.width(),origin.width());
+            cropped = new Mat(origin, roi);
+        }else{ //landscape
+            Rect roi = new Rect( -shift/2 , 0, origin.height(), origin.height());
+            cropped = new Mat(origin, roi);
+        }
+
+        Mat process = cropped.clone();
         //detectSize(edges.getNativeObjAddr());
 
         Rect rect = new Rect(); //Rect object with data
-        markObjectRect(process.getNativeObjAddr(),60.0d, rect);
+        markObjectRect(process.getNativeObjAddr(), 60.0d, rect);
 
-        Bitmap bmp = Bitmap.createBitmap(origin.cols(), origin.rows(), Bitmap.Config.ARGB_8888);
-        Utils.matToBitmap(origin,bmp);
 
-        Bitmap bmp2 = Bitmap.createBitmap(process.cols(), process.rows(), Bitmap.Config.ARGB_8888);
-        Utils.matToBitmap(process,bmp2);
+        if(mToggleCapture.isChecked()){
 
-        if(rect.area() > 5000)
-            savePicAndXml(mClassifyName,bmp, rect.x,rect.y,rect.width,rect.height, bmp2);
+            if (rect.area() > 5000) {
+                Bitmap bmp = Bitmap.createBitmap(cropped.cols(), cropped.rows(), Bitmap.Config.ARGB_8888);
+                Utils.matToBitmap(cropped, bmp);
 
-        return process;
+                Bitmap bmp2 = Bitmap.createBitmap(process.cols(), process.rows(), Bitmap.Config.ARGB_8888);
+                Utils.matToBitmap(process, bmp2);
+
+                Bitmap bmp3 = Bitmap.createBitmap(origin.cols(), origin.rows(), Bitmap.Config.ARGB_8888);
+                Utils.matToBitmap(origin, bmp3);
+                savePicAndXml(mClassifyName, bmp, rect.x, rect.y, rect.width, rect.height, bmp2, bmp3);
+            }
+            Log.e("XXX", "process" + process.height() + " " + process.width());
+            process.copyTo(origin.rowRange(0, process.height()).colRange(0, process.width()));
+        }else{
+            cropped.copyTo(origin.rowRange(0, cropped.height()).colRange(0, cropped.width()));
+        }
+
+        return origin;
     }
-    private  void savePicAndXml(String name,Bitmap bmp,int x,int y,int w, int h, Bitmap bmp2){
+
+    private  void savePicAndXml(String name,Bitmap bmp,int x,int y,int w, int h, Bitmap bmp2, Bitmap bmp3){
         try {
             long time= System.currentTimeMillis();
             String filename_base = name+Long.toString(time);
             String picname = filename_base + ".jpg";
             String picname2 = filename_base + ".jpg";
+            String picname3 = filename_base + ".jpg";
             String xmlname = filename_base + ".xml";
             File filexml = new File(getPublicDownloadStorageDir(name), xmlname);
             File filepic = new File(getPublicDownloadStorageDir(name), picname);
             File filepic2 = new File(getPublicDownloadStorageDir(name+"_check"), picname2);
+            File filepic3 = new File(getPublicDownloadStorageDir(name+"_check2"), picname3);
 //            FileWriter fw = new FileWriter(filexml);
 //            StringWriter writer = new StringWriter();
             FileOutputStream fos_xml = new FileOutputStream(filexml);
             FileOutputStream fos_pic = new FileOutputStream(filepic);
             FileOutputStream fos_pic2 = new FileOutputStream(filepic2);
+            FileOutputStream fos_pic3 = new FileOutputStream(filepic3);
             XmlSerializer xmlSerializer = Xml.newSerializer();
 
             xmlSerializer.setOutput(fos_xml,"UTF-8");
@@ -226,6 +279,10 @@ public class EdgeDetection extends AppCompatActivity implements CameraBridgeView
             bmp2.compress(Bitmap.CompressFormat.JPEG, 50, fos_pic2);
             fos_pic2.flush();
             fos_pic2.close();
+
+            bmp3.compress(Bitmap.CompressFormat.JPEG, 50, fos_pic3);
+            fos_pic3.flush();
+            fos_pic3.close();
         }
         catch (FileNotFoundException e) {
             // TODO Auto-generated catch block

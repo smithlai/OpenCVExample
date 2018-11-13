@@ -14,9 +14,29 @@
     <org.opencv.android.JavaCameraView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:visibility="gone"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"
+        android:visibility="visible"
         android:id="@+id/camera_view"
         opencv:show_fps="true"
         opencv:camera_id="any"/>
+    <RelativeLayout
+        android:id="@+id/overlay"
+        android:layout_width="200px"
+        android:layout_height="match_parent"
+        android:background="@color/colorAccent"
+        android:layout_alignParentRight="true">
+        <ToggleButton
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:id="@+id/toggle_capture"
+            android:checked="false"
+            android:textOff="按我截圖"
+            android:textOn="按我暫停" />
+            />
+        <!--- Put your Content Here -->
+
+    </RelativeLayout>
 
 </RelativeLayout>
