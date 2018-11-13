@@ -18,8 +18,10 @@ import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
+import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.Rect;
+import org.opencv.imgproc.Imgproc;
 import org.xmlpull.v1.XmlSerializer;
 
 import java.io.File;
@@ -148,45 +150,40 @@ public class EdgeDetection extends AppCompatActivity implements CameraBridgeView
 
 
         if(mToggleCapture.isChecked()){
-
             if (rect.area() > 5000) {
-                Bitmap bmp = Bitmap.createBitmap(cropped.cols(), cropped.rows(), Bitmap.Config.ARGB_8888);
-                Utils.matToBitmap(cropped, bmp);
+                Mat dst = new Mat(600,600, CvType.CV_8UC3);
 
-                Bitmap bmp2 = Bitmap.createBitmap(process.cols(), process.rows(), Bitmap.Config.ARGB_8888);
-                Utils.matToBitmap(process, bmp2);
+                Imgproc.resize(cropped, dst, dst.size()); //resize image
+                Bitmap bmp = Bitmap.createBitmap(dst.cols(), dst.rows(), Bitmap.Config.ARGB_8888);
+                Utils.matToBitmap(dst, bmp);
 
-                Bitmap bmp3 = Bitmap.createBitmap(origin.cols(), origin.rows(), Bitmap.Config.ARGB_8888);
-                Utils.matToBitmap(origin, bmp3);
-                savePicAndXml(mClassifyName, bmp, rect.x, rect.y, rect.width, rect.height, bmp2, bmp3);
+                Imgproc.resize(process, dst, dst.size()); //resize image
+                Bitmap bmp2 = Bitmap.createBitmap(dst.cols(), dst.rows(), Bitmap.Config.ARGB_8888);
+                Utils.matToBitmap(dst, bmp2);
+
+                savePicAndXml(mClassifyName, bmp, rect.x, rect.y, rect.width, rect.height, bmp2);
             }
-            Log.e("XXX", "process" + process.height() + " " + process.width());
-            process.copyTo(origin.rowRange(0, process.height()).colRange(0, process.width()));
-        }else{
-            cropped.copyTo(origin.rowRange(0, cropped.height()).colRange(0, cropped.width()));
         }
-
+        process.copyTo(origin.rowRange(0, process.height()).colRange(0, process.width()));
         return origin;
     }
 
-    private  void savePicAndXml(String name,Bitmap bmp,int x,int y,int w, int h, Bitmap bmp2, Bitmap bmp3){
+    private  void savePicAndXml(String name,Bitmap bmp,int x,int y,int w, int h, Bitmap bmp2){
         try {
             long time= System.currentTimeMillis();
             String filename_base = name+Long.toString(time);
             String picname = filename_base + ".jpg";
             String picname2 = filename_base + ".jpg";
-            String picname3 = filename_base + ".jpg";
             String xmlname = filename_base + ".xml";
             File filexml = new File(getPublicDownloadStorageDir(name), xmlname);
             File filepic = new File(getPublicDownloadStorageDir(name), picname);
             File filepic2 = new File(getPublicDownloadStorageDir(name+"_check"), picname2);
-            File filepic3 = new File(getPublicDownloadStorageDir(name+"_check2"), picname3);
 //            FileWriter fw = new FileWriter(filexml);
 //            StringWriter writer = new StringWriter();
             FileOutputStream fos_xml = new FileOutputStream(filexml);
             FileOutputStream fos_pic = new FileOutputStream(filepic);
             FileOutputStream fos_pic2 = new FileOutputStream(filepic2);
-            FileOutputStream fos_pic3 = new FileOutputStream(filepic3);
+
             XmlSerializer xmlSerializer = Xml.newSerializer();
 
             xmlSerializer.setOutput(fos_xml,"UTF-8");
@@ -280,9 +277,6 @@ public class EdgeDetection extends AppCompatActivity implements CameraBridgeView
             fos_pic2.flush();
             fos_pic2.close();
 
-            bmp3.compress(Bitmap.CompressFormat.JPEG, 50, fos_pic3);
-            fos_pic3.flush();
-            fos_pic3.close();
         }
         catch (FileNotFoundException e) {
             // TODO Auto-generated catch block
